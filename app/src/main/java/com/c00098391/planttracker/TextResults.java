@@ -45,6 +45,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
+import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
@@ -75,44 +76,28 @@ public class TextResults extends AppCompatActivity {
 
 
 
+        String username = getIntent().getStringExtra("username");
 
-        // ivText.setDrawingCacheEnabled(true);
-        //ivText.buildDrawingCache(true);
+        Bitmap bm ;
+        byte[] byteArray = getIntent().getByteArrayExtra("image");
+        bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
-        Intent intent = getIntent();
-        final String name = intent.getStringExtra("file");
-        String username = intent.getStringExtra("username");
-
-
-        byte[] by = new byte[(int) name.length()];
-        Bitmap bmp = BitmapFactory.decodeFile(name);
-        final Bitmap b = BitmapFactory.decodeFile(name);
-        runTextRecognition(b);
-
-        try {
-            FileInputStream fi = new FileInputStream(name);
-            fi.read(by);
-            fi.close();
-
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        runTextRecognition(bm);
 
 
         String textResults = tvText.getText().toString();
         String [] arrSplit = textResults.split("\\s");
 
-        for (int i = 0; i < arrSplit.length; i++){
-
-            Log.i("Text Results: ", arrSplit[i]);
-        }
+//        for (int i = 0; i < arrSplit.length; i++){
+//
+//            Log.i("Text Results: ","RESULTS "  + arrSplit[i]);
+//        }
        // String rep = arrSplit[2];
       //  String expName = arrSplit[4] + " " + arrSplit[5];
+        //Log.i("Test Results: ", "RESUKTS " + arrSplit[0]);
 
 
-
-
-        String encodedImg = Base64.encodeToString(by, Base64.DEFAULT);
+        String encodedImg = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
         // Set format for time and date
         SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
@@ -126,11 +111,12 @@ public class TextResults extends AppCompatActivity {
         expDetails[0] = date;
         expDetails[1] = time;
         expDetails[2] = encodedImg;
+        expDetails[3] = username;
        // expDetails[3] = rep;
      //   expDetails[4] = expName;
-        expDetails[6] = username;
+        //
 
-        ivText.setImageBitmap(bmp);
+        ivText.setImageBitmap(bm);
 
         btnShowText.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -214,7 +200,7 @@ public class TextResults extends AppCompatActivity {
         protected JSONObject doInBackground(String... args){
 
             try{
-                URL url = new URL("http://www.c0009839.candept.com/API/CreateExperiment.php");
+                URL url = new URL("http://www.c0009839.candept.com/API/CreateExperiment.php?");
 
                 // need user name and user id.....
 
@@ -224,16 +210,17 @@ public class TextResults extends AppCompatActivity {
                 JSONObject dataParams = new JSONObject();
                 dataParams.put("date", args[0]);
                 dataParams.put("time", args[1]);
-              //  dataParams.put("image", args[2]);
+                dataParams.put("image", args[2]);
+                dataParams.put("username", args[3]);
               //  dataParams.put("rep", args[3]);
               //  dataParams.put("expt", args[4]);
-              //  dataParams.put("username", args[6]);
+
                 Log.i("DATAPARAS", dataParams.toString());
 
                 // Set up connection
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
-                conn.setReadTimeout(50000);
-                conn.setConnectTimeout(50000);
+                conn.setReadTimeout(15000);
+                conn.setConnectTimeout(15000);
                 conn.setRequestMethod("POST");
                 conn.setDoInput(true);
                 conn.setDoOutput(true);
