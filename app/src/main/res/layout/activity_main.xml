@@ -9,66 +9,30 @@
 
 
     <Button
-        android:id="@+id/btnCustomCamera"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginTop="20dp"
-        android:text="Detect Disease" />
-
-    <Button
         android:id="@+id/btnStartExp"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
         android:layout_marginTop="20dp"
+        android:layout_marginRight="20dp"
         android:text="Start Experiment" />
 
     <Button
-        android:id="@+id/btnGPS"
+        android:id="@+id/btnDetect"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
         android:layout_marginTop="20dp"
-        android:text="Get GPS" />
-
-    <TextView
-        android:id="@+id/tvGPS"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:layout_marginTop="20dp"
-        android:hint="GPS" />
+        android:text="Detect Disease" />
 
     <Button
-        android:id="@+id/btnWeather"
+        android:id="@+id/btnPreviousAnalysis"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
         android:layout_marginTop="20dp"
-        android:text="Get Weather" />
-
-    <TextView
-        android:id="@+id/tvTemp"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
         android:layout_marginRight="20dp"
-        android:layout_marginTop="20dp"
-        android:hint="Temp" />
-
-    <TextView
-        android:id="@+id/tvDesc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:layout_marginTop="20dp"
-        android:hint="Description" />
+        android:text="View Previous Analysis" />
 
 </LinearLayout>

@@ -155,6 +155,7 @@ public class LoginActivity extends AppCompatActivity {
                                 "message"), Toast.LENGTH_LONG).show();
                      Intent intent = new Intent(LoginActivity.this,
                              com.c00098391.planttracker.MainActivity.class);
+                     intent.putExtra("username", etName.getText().toString());
                      startActivity(intent);
                     }else{
                         Toast.makeText(getApplicationContext(), result.getString(

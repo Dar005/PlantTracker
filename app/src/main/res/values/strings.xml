@@ -3,4 +3,8 @@
     <string name="sign_in">Sign In</string>
     <string name="password">Password</string>
     <string name="name">Name</string>
+    <string name="grid_overlay" />
+    <string name="capture_image">Capture Image</string>
+    <string name="capture_text">Capture Text</string>
+    <string name="detect_disease">Detect Disease</string>
 </resources>

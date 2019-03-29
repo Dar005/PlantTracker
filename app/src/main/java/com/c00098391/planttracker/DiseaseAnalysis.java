@@ -1,202 +1,231 @@
 package com.c00098391.planttracker;
 
 import android.annotation.SuppressLint;
-import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
-import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.util.Base64;
+import android.util.DisplayMetrics;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.tasks.OnFailureListener;
-import com.google.android.gms.tasks.OnSuccessListener;
-import com.google.firebase.ml.vision.FirebaseVision;
-import com.google.firebase.ml.vision.common.FirebaseVisionImage;
-import com.google.firebase.ml.vision.text.FirebaseVisionText;
-import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
-
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.opencv.android.Utils;
+import org.opencv.core.Mat;
+import org.opencv.core.Size;
+import org.opencv.imgproc.Imgproc;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.io.RandomAccessFile;
 import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
+import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
 
-public class TextResults extends AppCompatActivity {
+public class DiseaseAnalysis extends AppCompatActivity {
 
-    ImageView ivText;
-    TextView tvText;
-    Button btnShowText;
-    String data;
+    ImageView imgView;
+    TextView tvAnalysis;
+    Button btnUploadAnalysis, btnEndExperiment;
+
 
     static InputStream inputStream = null;
     static String json;
     static JSONObject jObj = null;
     static String error = "";
 
-   // private Bitmap bitmap;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_text_results);
+        setContentView(R.layout.activity_disease_analysis);
 
-        ivText = findViewById(R.id.ivText);
-        tvText = findViewById(R.id.tvText);
-        btnShowText = findViewById(R.id.btnShowText);
+        btnUploadAnalysis = findViewById(R.id.btnUploadAnalysis);
+        btnEndExperiment = findViewById(R.id.btnEndExperiment);
+        tvAnalysis = findViewById(R.id.tvAnalysis);
+
+        imgView = findViewById(R.id.imgView);
+
+        imgView.setDrawingCacheEnabled(true);
+        imgView.buildDrawingCache(true);
 
         String username = getIntent().getStringExtra("username");
 
-        byte[] byteArray = getIntent().getByteArrayExtra("image");
-        Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+        final byte[] byteArray = getIntent().getByteArrayExtra("image");
+        final Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
-        runTextRecognition(bm);
-
-        String encodedImg = Base64.encodeToString(byteArray, Base64.DEFAULT);
+        imgView.setImageBitmap(bm);
 
 
-        // Set format for time and date
-        SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
-        SimpleDateFormat tf = new SimpleDateFormat("hh:mm:ss");
+        DisplayMetrics dm = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(dm);
+        final int screenWidth = dm.widthPixels;
+        final int screenHeight = dm.heightPixels;
 
-        // Create strings for time and date
-        final String date = df.format(Calendar.getInstance().getTime());
-        final String time = tf.format(Calendar.getInstance().getTime());
+        Mat mat = new Mat();
+        Utils.bitmapToMat(bm, mat);
+        final Mat hsvMat = mat;
 
-        final String [] expDetails = new String[8];
-        expDetails[0] = date;
-        expDetails[1] = time;
-        expDetails[2] = encodedImg;
-        expDetails[3] = username;
+        Toast.makeText(DiseaseAnalysis.this, "width x height" + screenWidth + ", "
+                + screenHeight, Toast.LENGTH_LONG).show();
 
 
-        ivText.setImageBitmap(bm);
-
-
-
-        btnShowText.setOnClickListener(new View.OnClickListener() {
+        imgView.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
+            public boolean onTouch(View view, MotionEvent motionEvent) {
 
-                String textResults = getTextData();
-                Log.i("STRING", "ONE :" + tvText.getText().toString());
-                String [] split = textResults.split("\\s+");
-                String one = split[0];
-                Log.i("STRING", "ONE :" + split[0]);
-                String rep = split[2];
-                String exp = split[4] + " " + split[5];
+                int[] viewCoords = new int[2];
+                imgView.getLocationOnScreen(viewCoords);
 
-                expDetails[4] = rep;
-                expDetails[5] = exp;
 
-                UploadData ud = new UploadData();
-                ud.execute(expDetails);
+               // bitmap = imgView.getDrawingCache();
+
+                //bitmap = bmp;
+                int pixel = bm.getPixel((int)motionEvent.getX(), (int)motionEvent.getY());
+
+                int touchX = (int) motionEvent.getX();
+                int touchY = (int) motionEvent.getY();
+
+                int imageX = touchX - viewCoords[0];
+                int imageY = touchY - viewCoords[1];
+
+
+
+                Log.v("X-COORD", imageX+"");
+                Log.v("Y-COORD", imageY+"");
+
+
+
+
+
+                /**
+                 * Get hsv double array of pixel at position of on touch
+                 */
+
+                Size sz = new Size(screenWidth, screenHeight);
+                Imgproc.resize(hsvMat, hsvMat, sz);
+//                Imgproc.cvtColor(hsvMat, hsvMat, Imgproc.COLOR_RGB2BGR);
+                Imgproc.cvtColor(hsvMat, hsvMat, Imgproc.COLOR_BGR2HLS);
+
+                HashMap<String, Integer> colorList = new HashMap<String, Integer>();
+
+                int hsvHeight = hsvMat.rows();
+                int hsvWidth = hsvMat.cols();
+                int total = hsvHeight * hsvWidth;
+
+                double [] onTouch = hsvMat.get(imageX, imageY);
+
+
+
+                String color = "";
+                int colorCount = 0;
+
+                for (int i = 0; i < hsvHeight; i++){
+
+                    for (int k = 0; k < hsvWidth; k++){
+
+
+
+
+                        double [] hsl = hsvMat.get(i, k);
+
+                        double h = hsl[0];
+                        double s = hsl[1];
+                        double l = hsl[2];
+
+//                        if ((h >= 65) && (h <= 100)) {
+//                            color = "white";
+//                        }
+
+//                        else if(h <= touchHupper && h >= touchHlower
+//                                && l <= touchLupper && l >= touchLlower
+//                                && s <= touchSupper && s >= touchSlower) {
+//                            color = "good";
+//                        }
+
+                        if (l > 94){
+                            color = "white";
+                        }
+                        else if(h >= 80.0 && s >= 21.0 && l >= 20.0
+                                && h <= 140.0 && s <= 100.0 && l <= 75.0){
+                            color = "green";
+                        }
+
+                        else if (h >= 0.0 && s <= 100.0 && l >= 27.0
+                                && h >= 0.0 && s >= 100.0 && l >= 50.0){
+                            color = "red";
+                        }
+
+                        else{
+                            color = "unknown";
+                        }
+
+                        if (colorList.containsKey(color)){
+                            colorCount = colorList.get(color);
+                            colorCount++;
+                            colorList.put(color, colorCount);
+
+                        }else{
+                            colorCount = 1;
+                            colorList.put(color, colorCount);
+                        }
+                    }
+                }
+
+
+                Integer whiteCount = colorList.get("white");
+                Integer greenCount = colorList.get("green");
+                Integer unknownCount = colorList.get("unknown");
+                Integer redCount = colorList.get("red");
+
+                Toast.makeText(DiseaseAnalysis.this, "White Count = " + whiteCount +
+                        "\nGreen Count = " + greenCount + "\nRed Count = " + redCount +
+                        "\n Unknown = " + unknownCount, Toast.LENGTH_LONG).show();
+
+                Integer all = (greenCount + redCount + unknownCount);
+                Integer analysis = greenCount * (100/all);
+
+//                tvAnalysis.setVisibility(View.VISIBLE);
+//                btnEndExperiment.setVisibility(View.VISIBLE);
+//                btnUploadAnalysis.setVisibility(View.VISIBLE);
+//
+//                tvAnalysis.setText(analysis + "%");
+
+                String a = String.valueOf(analysis);
+
+                String b = "18%";
+
+                Intent intent = new Intent(DiseaseAnalysis.this,
+                        com.c00098391.planttracker.DiseaseResult.class);
+                intent.putExtra("analysis", a);
+                intent.putExtra("image", byteArray);
+                startActivity(intent);
+
+
+                return true;
+
+                // finish();
+
             }
         });
 
 
 
-    } // end of on create
-
-    public void setTextData(String data){
-        this.data = data;
-    }
-    public String getTextData(){
-        return this.data;
-    }
-
-
-    private void runTextRecognition(Bitmap b){
-        FirebaseVisionImage image = FirebaseVisionImage.fromBitmap(b);
-        FirebaseVisionTextRecognizer recognizer = FirebaseVision.getInstance()
-                .getOnDeviceTextRecognizer();
-        btnShowText.setEnabled(false);
-        recognizer.processImage(image)
-                .addOnSuccessListener(new OnSuccessListener<FirebaseVisionText>() {
-                    @Override
-                    public void onSuccess(FirebaseVisionText texts) {
-                        btnShowText.setEnabled(true);
-                        processTextRecognitionResult(texts);
-
-                    }
-                })
-                .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                btnShowText.setEnabled(true);
-                                e.printStackTrace();
-                            }
-                        }
-                );
-    }
-
-    private void processTextRecognitionResult(FirebaseVisionText texts){
-        List<FirebaseVisionText.TextBlock> blocks = texts.getTextBlocks();
-        if(blocks.size() == 0){
-            Toast.makeText(TextResults.this, "No text found", Toast.LENGTH_LONG).show();
-            //return "";
-        }
-
-        StringBuilder sb = new StringBuilder();
-        Boolean first = true;
-        String s = "";
-
-        for (int i = 0; i < blocks.size(); i++){
-            List<FirebaseVisionText.Line> lines = blocks.get(i).getLines();
-            for (int j = 0; j < lines.size(); j++){
-                List<FirebaseVisionText.Element> elements = lines.get(j).getElements();
-//                if (first){
-//                    first = false;
-//                }else {
-//                    sb.append(" ");
-//
-//                }
-
-                for (int k = 0; k< elements.size(); k++){
-                    //  Graphic textGraphic = new TextGraphic(mGraphicOverlay, elements.get(k));
-                    // mGraphicOverlay.add(textGraphic);
-
-                    sb.append(elements.get(k).getText()+ " ");
-
-                    s = s + elements.get(k).getText() + " ";
-                }
-            }
-        }
-
-        tvText.setText(s);
-
-        setTextData(s);
     }
 
     // Async task for sending data i.e. image date and time....
@@ -284,7 +313,7 @@ public class TextResults extends AppCompatActivity {
                 if (result != null){
 
                     String uploadSuccess = result.getString("message");
-                    if (uploadSuccess.equals("Successfully uploaded image")){
+                    if (uploadSuccess.equals("Successfully uploaded analysis")){
                         Toast.makeText(getApplicationContext(), result.getString(
                                 "message"), Toast.LENGTH_LONG).show();
 
@@ -293,23 +322,12 @@ public class TextResults extends AppCompatActivity {
                         String expId = result.getString("expid");
 
 
-                        Intent intent = new Intent(TextResults.this,
+                        Intent intent = new Intent(DiseaseAnalysis.this,
                                 com.c00098391.planttracker.DetectDisease.class);
                         intent.putExtra("username", username);
                         intent.putExtra("userid", userId);
                         intent.putExtra("expid", expId);
                         startActivity(intent);
-
-
-
-                        //Intent intent = new Intent(TextResults.this,
-                        //        com.c00098391.planttracker.DetectDisease.class);
-                        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                       // getApplicationContext().startActivity(intent);
-                        //intent.putExtra("username", username);
-                        //intent.putExtra("userid", userId);
-                        //intent.putExtra("expid", expId);
-                        //startActivity(intent);
 
 
                     }else{
@@ -347,5 +365,4 @@ public class TextResults extends AppCompatActivity {
         }
         return result.toString();
     }
-
 }
