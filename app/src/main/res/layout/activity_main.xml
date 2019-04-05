@@ -18,13 +18,13 @@
         android:text="Start Experiment" />
 
     <Button
-        android:id="@+id/btnDetect"
+        android:id="@+id/btnContinue"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginLeft="20dp"
         android:layout_marginTop="20dp"
         android:layout_marginRight="20dp"
-        android:text="Detect Disease" />
+        android:text="Continue Experiment" />
 
     <Button
         android:id="@+id/btnPreviousAnalysis"

@@ -27,6 +27,7 @@ import com.google.firebase.ml.vision.text.FirebaseVisionTextRecognizer;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
@@ -50,12 +51,13 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Iterator;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class TextResults extends AppCompatActivity {
 
     ImageView ivText;
     TextView tvText;
-    Button btnShowText;
+    Button btnShowText, btnInputdetailsMaually;
     String data;
 
     static InputStream inputStream = null;
@@ -63,7 +65,23 @@ public class TextResults extends AppCompatActivity {
     static JSONObject jObj = null;
     static String error = "";
 
-   // private Bitmap bitmap;
+    String username;
+    String userId;
+    String rep;
+    String treatment;
+    String expt;
+
+
+    // Location variables
+    String lat = "";
+    String lon = "";
+
+    // Weather variables
+    private static final String APP_ID = "b11dc521fd3aecc6374e2e331dc090e3";
+   // String weather = "";
+    String units = "metric";
+    String url;
+    String weather = "";
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -74,15 +92,27 @@ public class TextResults extends AppCompatActivity {
         ivText = findViewById(R.id.ivText);
         tvText = findViewById(R.id.tvText);
         btnShowText = findViewById(R.id.btnShowText);
+        btnInputdetailsMaually = findViewById(R.id.btnInputDetailsMaually);
 
-        String username = getIntent().getStringExtra("username");
+        // Start Location service and get lat and lon
+        startService(new Intent(TextResults.this,
+                com.c00098391.planttracker.GPS.class));
+        final GPS gps = new GPS(TextResults.this);
+        lat = Double.toString(gps.getLatitude());
+        lon = Double.toString(gps.getLongitude());
 
-        byte[] byteArray = getIntent().getByteArrayExtra("image");
+        url = "http://api.openweathermap.org/data/2.5/weather?lat="+lat+"&lon="+lon+"&units="+units+"&appid="+APP_ID;
+
+        username = getIntent().getStringExtra("username");
+        userId = getIntent().getStringExtra("userid");
+
+        final byte[] byteArray = getIntent().getByteArrayExtra("image");
         Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
         runTextRecognition(bm);
 
         String encodedImg = Base64.encodeToString(byteArray, Base64.DEFAULT);
+
 
 
         // Set format for time and date
@@ -93,34 +123,71 @@ public class TextResults extends AppCompatActivity {
         final String date = df.format(Calendar.getInstance().getTime());
         final String time = tf.format(Calendar.getInstance().getTime());
 
-        final String [] expDetails = new String[8];
+        String weatherData = null;
+        try {
+            weatherData = new TextResults.GetWeatherTask(weather).execute(url).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
+
+
+        // weather = weatherData;
+
+        final String [] expDetails = new String[11];
         expDetails[0] = date;
         expDetails[1] = time;
         expDetails[2] = encodedImg;
         expDetails[3] = username;
-
+        expDetails[4] = userId;
+        expDetails[5] = weatherData;
+        expDetails[6] = lat;
+        expDetails[7] = lon;
 
         ivText.setImageBitmap(bm);
-
-
 
         btnShowText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
                 String textResults = getTextData();
-                Log.i("STRING", "ONE :" + tvText.getText().toString());
-                String [] split = textResults.split("\\s+");
-                String one = split[0];
-                Log.i("STRING", "ONE :" + split[0]);
-                String rep = split[2];
-                String exp = split[4] + " " + split[5];
+               // Log.i("STRING", "ONE :" + tvText.getText().toString());
+                //String [] split = textResults.split("\\s+");
+                //String one = split[0];
+               // Log.i("STRING", "ONE :" + split[0]);
+              //  String rep = split[2];
+               // String exp = split[4] + " " + split[5];
 
-                expDetails[4] = rep;
-                expDetails[5] = exp;
+              //  String text = tvText.getText().toString();
+                String [] parts = textResults.split(" ");
+                rep = parts[1];
+                treatment = parts[2];
+                expt = parts[4] +" " + parts[5];
+
+                expDetails[8] = rep;
+                expDetails[9] = expt;
+                expDetails[10] = treatment;
 
                 UploadData ud = new UploadData();
                 ud.execute(expDetails);
+            }
+        });
+
+        btnInputdetailsMaually.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(TextResults.this, com.c00098391.planttracker.InputDetails.class);
+                intent.putExtra("image", byteArray);
+                intent.putExtra("date", date);
+                intent.putExtra("time", time);
+                intent.putExtra("username", username);
+                intent.putExtra("userid", userId);
+                intent.putExtra("weather", weather);
+                intent.putExtra("lat", lat);
+                intent.putExtra("lon", lon);
+
+                startActivity(intent);
             }
         });
 
@@ -203,7 +270,6 @@ public class TextResults extends AppCompatActivity {
     public class UploadData extends AsyncTask<String, Void, JSONObject> {
 
 
-
         @Override
         protected JSONObject doInBackground(String... args){
 
@@ -220,8 +286,14 @@ public class TextResults extends AppCompatActivity {
                 dataParams.put("time", args[1]);
                 dataParams.put("image", args[2]);
                 dataParams.put("username", args[3]);
-                dataParams.put("rep",args[4]);
-                dataParams.put("exp", args[5]);
+                dataParams.put("userid", args[4]);
+                dataParams.put("weather", args[5]);
+                dataParams.put("lat", args[6]);
+                dataParams.put("lon", args[7]);
+                dataParams.put("rep",args[8]);
+                dataParams.put("expt", args[9]);
+                dataParams.put("treatment", args[10]);
+
 
                 Log.i("DATAPARAS", dataParams.toString());
 
@@ -284,20 +356,26 @@ public class TextResults extends AppCompatActivity {
                 if (result != null){
 
                     String uploadSuccess = result.getString("message");
-                    if (uploadSuccess.equals("Successfully uploaded image")){
+                    if (uploadSuccess.equals("Successfully created experiment")){
                         Toast.makeText(getApplicationContext(), result.getString(
                                 "message"), Toast.LENGTH_LONG).show();
 
-                        String username = result.getString("username");
-                        String userId = result.getString("userid");
-                        String expId = result.getString("expid");
+                       // String username = result.getString("username");
+                      //  String userId = result.getString("userid");
+                      //  String expId = result.getString("expid");
+                     //   String rep = result.getString("rep");
+                     //   String treatment = result.getString("treatment");
+                      //  String expt = result.getString("expt");
 
 
                         Intent intent = new Intent(TextResults.this,
                                 com.c00098391.planttracker.DetectDisease.class);
                         intent.putExtra("username", username);
                         intent.putExtra("userid", userId);
-                        intent.putExtra("expid", expId);
+                      //  intent.putExtra("expid", expId);
+                        intent.putExtra("rep", rep);
+                        intent.putExtra("treatment", treatment);
+                        intent.putExtra("expt", expt);
                         startActivity(intent);
 
 
@@ -313,8 +391,8 @@ public class TextResults extends AppCompatActivity {
 
 
                     }else{
-                        Toast.makeText(getApplicationContext(), result.getString(
-                                "message"), Toast.LENGTH_LONG).show();
+                        Toast.makeText(getApplicationContext(),
+                                "error", Toast.LENGTH_LONG).show();
                     }
                 }else{
                     Toast.makeText(getApplicationContext(),
@@ -346,6 +424,56 @@ public class TextResults extends AppCompatActivity {
             result.append(URLEncoder.encode(value.toString(), "UTF-8"));
         }
         return result.toString();
+    }
+
+    @SuppressLint("StaticFieldLeak")
+    private class GetWeatherTask extends AsyncTask<String, Void, String> {
+
+        private String weather;
+
+        public GetWeatherTask(String weather){
+            this.weather = weather;
+        }
+
+        @Override
+        protected  String doInBackground(String... strings){
+            String weather = "UNDEFINED";
+
+            try {
+                URL url = new URL(strings[0]);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
+                StringBuilder builder = new StringBuilder();
+
+                String inputString;
+                while ((inputString = bufferedReader.readLine()) != null){
+                    builder.append(inputString);
+                }
+
+                JSONObject topLevel = new JSONObject(builder.toString());
+                JSONObject main = topLevel.getJSONObject("main");
+                String temp = String.valueOf(main.getDouble("temp"));
+
+                String overview = topLevel.getJSONArray("weather")
+                        .getJSONObject(0).get("main").toString();
+                String desc = topLevel.getJSONArray("weather")
+                        .getJSONObject(0).get("description").toString();
+
+                weather = temp + "C, " + overview + "(" + desc + ")";
+
+                urlConnection.disconnect();
+            }catch (IOException | JSONException e){
+                e.printStackTrace();
+            }
+            return weather;
+        }
+
+        @Override
+        protected void onPostExecute(String temp) {
+            weather = "Current Weather " + temp;
+        }
     }
 
 }

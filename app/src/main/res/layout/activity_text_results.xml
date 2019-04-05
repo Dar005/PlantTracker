@@ -17,7 +17,7 @@
     <TextView
         android:id="@+id/tvText"
         android:layout_width="match_parent"
-        android:layout_height="67dp"
+        android:layout_height="31dp"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="460dp" />
 
@@ -25,15 +25,16 @@
         android:id="@+id/btnShowText"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Show Text"
+        android:text="Create Experiment"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="584dp" />
 
     <Button
-        android:id="@+id/btnHome"
+        android:id="@+id/btnInputDetailsMaually"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="Home"
+        android:layout_marginTop="30dp"
+        android:text="Input Details Manually"
         tools:layout_editor_absoluteX="0dp"
         tools:layout_editor_absoluteY="584dp" />
 

@@ -84,6 +84,7 @@ public class CaptureText extends AppCompatActivity {
     private HandlerThread mBackgroundThread;
 
     String username;
+    String userId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -99,6 +100,7 @@ public class CaptureText extends AppCompatActivity {
 
         // Get user info
         username = getIntent().getStringExtra("username");
+        userId = getIntent().getStringExtra("userid");
 
 
         btnCaptureText.setOnClickListener(new View.OnClickListener() {
@@ -259,6 +261,7 @@ public class CaptureText extends AppCompatActivity {
                         Intent intent = new Intent(CaptureText.this,
                             com.c00098391.planttracker.TextResults.class);
                       intent.putExtra("username", username);
+                      intent.putExtra("userid", userId);
                       intent.putExtra("image", byteOut);
                       startActivity(intent);
 

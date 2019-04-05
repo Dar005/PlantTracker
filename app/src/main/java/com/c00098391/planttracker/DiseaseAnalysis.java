@@ -42,12 +42,21 @@ public class DiseaseAnalysis extends AppCompatActivity {
     TextView tvAnalysis;
     Button btnUploadAnalysis, btnEndExperiment;
 
+    String username;
+    String userId;
+    String lat = "";
+    String lon = "";
+    String weather = "";
+    String rep;
+    String treatment;
+    String expt;
 
     static InputStream inputStream = null;
     static String json;
     static JSONObject jObj = null;
     static String error = "";
 
+  // String exp;
 
     @SuppressLint("ClickableViewAccessibility")
     @Override
@@ -64,12 +73,23 @@ public class DiseaseAnalysis extends AppCompatActivity {
         imgView.setDrawingCacheEnabled(true);
         imgView.buildDrawingCache(true);
 
-        String username = getIntent().getStringExtra("username");
+
+        expt = getIntent().getStringExtra("expt");
+
+        username = getIntent().getStringExtra("username");
+        userId = getIntent().getStringExtra("userid");
+        weather = getIntent().getStringExtra("weather");
+        lat = getIntent().getStringExtra("lat");
+        lon = getIntent().getStringExtra("lon");
+        rep = getIntent().getStringExtra("rep");
+        treatment = getIntent().getStringExtra("treatment");
+        expt = getIntent().getStringExtra("expt");
 
         final byte[] byteArray = getIntent().getByteArrayExtra("image");
         final Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
         imgView.setImageBitmap(bm);
+
 
 
         DisplayMetrics dm = new DisplayMetrics();
@@ -193,9 +213,9 @@ public class DiseaseAnalysis extends AppCompatActivity {
                 Integer unknownCount = colorList.get("unknown");
                 Integer redCount = colorList.get("red");
 
-                Toast.makeText(DiseaseAnalysis.this, "White Count = " + whiteCount +
-                        "\nGreen Count = " + greenCount + "\nRed Count = " + redCount +
-                        "\n Unknown = " + unknownCount, Toast.LENGTH_LONG).show();
+//                Toast.makeText(DiseaseAnalysis.this, "White Count = " + whiteCount +
+//                        "\nGreen Count = " + greenCount + "\nRed Count = " + redCount +
+//                        "\n Unknown = " + unknownCount, Toast.LENGTH_LONG).show();
 
                 Integer all = (greenCount + redCount + unknownCount);
                 Integer analysis = greenCount * (100/all);
@@ -210,10 +230,21 @@ public class DiseaseAnalysis extends AppCompatActivity {
 
                 String b = "18%";
 
+
+
+
                 Intent intent = new Intent(DiseaseAnalysis.this,
                         com.c00098391.planttracker.DiseaseResult.class);
                 intent.putExtra("analysis", a);
                 intent.putExtra("image", byteArray);
+                intent.putExtra("lat", lat);
+                intent.putExtra("lon", lon);
+                intent.putExtra("weather", weather);
+                intent.putExtra("username", username);
+                intent.putExtra("userid", userId);
+                intent.putExtra("rep", rep);
+                intent.putExtra("treatment", treatment);
+                intent.putExtra("expt", expt);
                 startActivity(intent);
 
 
@@ -223,8 +254,6 @@ public class DiseaseAnalysis extends AppCompatActivity {
 
             }
         });
-
-
 
     }
 

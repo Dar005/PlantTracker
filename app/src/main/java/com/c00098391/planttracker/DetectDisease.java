@@ -19,12 +19,14 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.os.AsyncTask;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Base64;
 import android.util.Log;
 import android.util.Size;
 import android.util.SparseIntArray;
@@ -35,15 +37,27 @@ import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.io.BufferedInputStream;
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.nio.ByteBuffer;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 public class DetectDisease extends AppCompatActivity {
     // Over lay grid image
@@ -68,13 +82,33 @@ public class DetectDisease extends AppCompatActivity {
     private ImageReader imageReader;
     private File file; // DON'T THINK THIS IS USED....
 
+    // Location variables
+    String lat = "";
+    String lon = "";
+
+    // Weather variables
+    private static final String APP_ID = "b11dc521fd3aecc6374e2e331dc090e3";
+    String weather = "";
+    String units = "metric";
+    String url = "http://api.openweathermap.org/data/2.5/weather?lat="+lat+"&lon="+lon+"&units="+units+"&appid="+APP_ID;
+
+
+
+
     protected String fileLoc;
     private static final int REQUEST_CAMERA_PERMISSION = 200;
     private boolean mFlashSupported; // DON'T THINK THIS IS USED
     private Handler mBackGroundHandler;
     private HandlerThread mBackgroundThread;
 
+
+    // variables for experiment info and user
+    String expt;
+    String treatment;
+    String rep;
     String username;
+    String userId;
+   // String exp;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -88,8 +122,33 @@ public class DetectDisease extends AppCompatActivity {
         btnDetectDisease = findViewById(R.id.btnDetectDisease);
         assert btnDetectDisease != null;
 
+
         // Get user info
         username = getIntent().getStringExtra("username");
+        userId = getIntent().getStringExtra("userid");
+        rep = getIntent().getStringExtra("rep");
+        expt = getIntent().getStringExtra("expt");
+        treatment = getIntent().getStringExtra("treatment");
+
+
+
+        // Start Location service and get lat and lon
+        startService(new Intent(DetectDisease.this,
+                com.c00098391.planttracker.GPS.class));
+        final GPS gps = new GPS(DetectDisease.this);
+        lat = Double.toString(gps.getLatitude());
+        lon = Double.toString(gps.getLongitude());
+
+
+        // Continue experiment.....
+        if(rep!=null){
+            // need to get EXPT, TREATMENT, rep from the database baseed on the info provided by the user
+            Toast.makeText(DetectDisease.this, rep + "\n " + expt + "\n" +treatment + " found", Toast.LENGTH_LONG).show();
+
+
+        }else{
+            Toast.makeText(DetectDisease.this, "EXP not found ", Toast.LENGTH_LONG).show();
+        }
 
 
 
@@ -232,6 +291,12 @@ public class DetectDisease extends AppCompatActivity {
                     Image image = null;
 
                     try {
+
+//                        // Get weather
+                        String units = "metric";
+                        String url = "http://api.openweathermap.org/data/2.5/weather?lat="+lat+"&lon="+lon+"&units="+units+"&appid="+APP_ID;
+                        String weatherData =  new GetWeatherTask(weather).execute(url).get();
+
                         image = reader.acquireLatestImage();
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
@@ -243,17 +308,36 @@ public class DetectDisease extends AppCompatActivity {
                         byte[] byteOut = stream.toByteArray();
 
 
-                        // save(byteOut);
+                        /**
+                         *
+                         *
+                         *
+                         */
+
+                        String encodedImg = Base64.encodeToString(byteOut, Base64.DEFAULT);
+
                         Intent intent = new Intent(DetectDisease.this,
                                 DiseaseAnalysis.class);
                         intent.putExtra("username", username);
                         intent.putExtra("image", byteOut);
+                        intent.putExtra("weather", weatherData);
+                        intent.putExtra("lat", lat);
+                        intent.putExtra("lon", lon);
+                        intent.putExtra("userid", userId);
+                        intent.putExtra("rep", rep);
+                        intent.putExtra("treatment", treatment);
+                        intent.putExtra("expt", expt);
                         startActivity(intent);
 
+                        // save(byteOut);
                         // save(bytes); TEST IF THIS WORKS WITHOUT THE ADDED STEPS!!!!
                         // }catch(IOException e){
                         //      e.printStackTrace();;
-                    }finally{
+                    } catch (InterruptedException e) {
+                        e.printStackTrace();
+                    } catch (ExecutionException e) {
+                        e.printStackTrace();
+                    } finally{
                         if(image != null){
                             image.close();
                         }
@@ -420,5 +504,54 @@ public class DetectDisease extends AppCompatActivity {
         closeCamera();
         stopBackgroundThread();
         super.onPause();
+    }
+
+    private class GetWeatherTask extends AsyncTask<String, Void, String> {
+
+        private String weather;
+
+        public GetWeatherTask(String weather){
+            this.weather = weather;
+        }
+
+        @Override
+        protected  String doInBackground(String... strings){
+            String weather = "UNDEFINED";
+
+            try {
+                URL url = new URL(strings[0]);
+                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
+
+                InputStream stream = new BufferedInputStream(urlConnection.getInputStream());
+                BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(stream));
+                StringBuilder builder = new StringBuilder();
+
+                String inputString;
+                while ((inputString = bufferedReader.readLine()) != null){
+                    builder.append(inputString);
+                }
+
+                JSONObject topLevel = new JSONObject(builder.toString());
+                JSONObject main = topLevel.getJSONObject("main");
+                String temp = String.valueOf(main.getDouble("temp"));
+
+                String overview = topLevel.getJSONArray("weather")
+                        .getJSONObject(0).get("main").toString();
+                String desc = topLevel.getJSONArray("weather")
+                        .getJSONObject(0).get("description").toString();
+
+                weather = temp + "C, " + overview + "(" + desc + ")";
+
+                urlConnection.disconnect();
+            }catch (IOException | JSONException e){
+                e.printStackTrace();
+            }
+            return weather;
+        }
+
+        @Override
+        protected void onPostExecute(String temp) {
+            weather = "Current Weather " + temp;
+        }
     }
 }

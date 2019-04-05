@@ -1,8 +1,7 @@
 package com.c00098391.planttracker;
 
+import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.AsyncTask;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,8 +9,7 @@ import android.util.Base64;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
-import android.widget.ImageView;
-import android.widget.TextView;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import org.json.JSONException;
@@ -29,147 +27,116 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
 import java.util.Iterator;
 import java.util.concurrent.ExecutionException;
 
-public class DiseaseResult extends AppCompatActivity {
-
-    ImageView imgView;
-    Button btnUploadAnalysis, btnEndExperiment;
-    TextView tvAnalysis;
-
+public class InputDetails extends AppCompatActivity {
 
     static InputStream inputStream = null;
     static String json;
     static JSONObject jObj = null;
     static String error = "";
 
-    /*
-              intent.putExtra("analysis", a);
-                intent.putExtra("image", byteArray);
-                intent.putExtra("lat", lat);
-                intent.putExtra("lon", lon);
-                intent.putExtra("weather", weather);
-                intent.putExtra("username", username);
-                intent.putExtra("userid", userId);
-                intent.putExtra("rep", rep);
-                intent.putExtra("treatment", treatment);
-                intent.putExtra("expt", expt);*/
+    Button btnCreateExp;
 
-    String username;
-    String userId;
+    EditText etRep, etTreat, etExpt;
+
     String rep;
     String treatment;
     String expt;
+
+    String userId;
+    String username;
+    String time;
+    String date;
 
     // Location variables
     String lat = "";
     String lon = "";
 
     // Weather variables
-   // private static final String APP_ID = "b11dc521fd3aecc6374e2e331dc090e3";
+    private static final String APP_ID = "b11dc521fd3aecc6374e2e331dc090e3";
     String weather = "";
-   // String units = "metric";
-    //String url = "http://api.openweathermap.org/data/2.5/weather?lat="+lat+"&lon="+lon
-     //       +"&units="+units+"&appid="+APP_ID;
+    String units = "metric";
+    String url;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_disease_result);
+        setContentView(R.layout.activity_input_details);
 
-        imgView = findViewById(R.id.ivAnalysis);
-        btnUploadAnalysis = findViewById(R.id.btnUploadAnalysis);
-        btnEndExperiment = findViewById(R.id.btnEndExperiment);
-        tvAnalysis = findViewById(R.id.tvAnalysis);
+        // Start Location service and get lat and lon
+        startService(new Intent(InputDetails.this,
+                com.c00098391.planttracker.GPS.class));
+        final GPS gps = new GPS(InputDetails.this);
+        lat = Double.toString(gps.getLatitude());
+        lon = Double.toString(gps.getLongitude());
+        url = "http://api.openweathermap.org/data/2.5/weather?lat="+lat+"&lon="+lon+"&units="+units+"&appid="+APP_ID;
 
-//        startService(new Intent(DiseaseResult.this,
-//                com.c00098391.planttracker.GPS.class));
-//        final GPS gps = new GPS(DiseaseResult.this);
+        btnCreateExp = findViewById(R.id.btnCreateExp);
+        etRep = findViewById(R.id.etRep);
+        etTreat = findViewById(R.id.etTreat);
+        etExpt = findViewById(R.id.etExpt);
 
-
-
-
-        //String analysis = getIntent().getStringExtra("analysis");
-
-        String analysis = "18";
-        lat = getIntent().getStringExtra("lat");
-        lon = getIntent().getStringExtra("lon");
-        weather = getIntent().getStringExtra("weather");
+        byte[] byteArray = getIntent().getByteArrayExtra("image");
+        date = getIntent().getStringExtra("date");
+        time = getIntent().getStringExtra("time");
         username = getIntent().getStringExtra("username");
         userId = getIntent().getStringExtra("userid");
-        rep = getIntent().getStringExtra("rep");
-        treatment = getIntent().getStringExtra("treatment");
-        expt = getIntent().getStringExtra("expt");
 
-        final byte[] byteArray = getIntent().getByteArrayExtra("image");
-        Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+        String weatherData = null;
+        try {
+            weatherData = new GetWeatherTask(weather).execute(url).get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
 
-        tvAnalysis.setText(analysis);
-
-        imgView.setImageBitmap(bm);
-//
-//        lat = Double.toString(gps.getLatitude());
-//        lon = Double.toString(gps.getLongitude());
-
-
-
-
-        // Base64 encode image
         String encodedImg = Base64.encodeToString(byteArray, Base64.DEFAULT);
 
-        // Set format for time and date
-        final SimpleDateFormat df = new SimpleDateFormat("dd-MM-yyyy");
-        final SimpleDateFormat tf = new SimpleDateFormat("hh:mm:ss");
-
-        // Create strings for time and date
-        String date = df.format(Calendar.getInstance().getTime());
-        String time = tf.format(Calendar.getInstance().getTime());
-
-        final String [] analysisDetails = new String[12];
-        analysisDetails[0] = date;
-        analysisDetails[1] = time;
-        analysisDetails[2] = encodedImg;
-        analysisDetails[3] = lat;
-        analysisDetails[4] = lon;
-        analysisDetails[5] = weather;
-        analysisDetails[6] = analysis;
-        analysisDetails[7] = userId;
-        analysisDetails[8] = username;
-        analysisDetails[9] = rep;
-        analysisDetails[10] = treatment;
-        analysisDetails[11] = expt;
-
-        //final String [] up = imageDetails.clone();
+        final String [] expDetails = new String[11];
+        expDetails[0] = date;
+        expDetails[1] = time;
+        expDetails[2] = encodedImg;
+        expDetails[3] = username;
+        expDetails[4] = userId;
+        expDetails[5] = weatherData;
+        expDetails[6] = lat;
+        expDetails[7] = lon;
 
 
-        btnUploadAnalysis.setOnClickListener(new View.OnClickListener() {
+
+        btnCreateExp.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
 
+                rep = etRep.getText().toString();
+                expt = etExpt.getText().toString();
+                treatment = etTreat.getText().toString();
 
-                UploadData ud = new UploadData();
-                ud.execute(analysisDetails);
+                expDetails[8] = rep;
+                expDetails[9] = expt;
+                expDetails[10] = treatment;
 
-                // create intent to move back to Detect Disease
+                CreateExperiment ce = new CreateExperiment();
+                ce.execute(expDetails);
 
             }
         });
-
     }
 
-
     // Async task for sending data i.e. image date and time....
-    public class UploadData extends AsyncTask<String, Void, JSONObject> {
+    public class CreateExperiment extends AsyncTask<String, Void, JSONObject> {
 
 
         @Override
         protected JSONObject doInBackground(String... args){
 
             try{
-                URL url = new URL("http://www.c0009839.candept.com/API/AnalysisUpload.php");
+                URL url = new URL("http://www.c0009839.candept.com/API/CreateExperiment.php");
+
+                // need user name and user id.....
 
 
                 // DATE TIME IMAGE
@@ -178,17 +145,16 @@ public class DiseaseResult extends AppCompatActivity {
                 dataParams.put("date", args[0]);
                 dataParams.put("time", args[1]);
                 dataParams.put("image", args[2]);
-                dataParams.put("lat", args[3]);
-                dataParams.put("lon", args[4]);
+                dataParams.put("username", args[3]);
+                dataParams.put("userid", args[4]);
                 dataParams.put("weather", args[5]);
-                dataParams.put("analysis", args[6]);
-                dataParams.put("userid", args[7]);
-                dataParams.put("username", args[8]);
-                dataParams.put("rep", args[9]);
+                dataParams.put("lat", args[6]);
+                dataParams.put("lon", args[7]);
+                dataParams.put("rep",args[8]);
+                dataParams.put("expt", args[9]);
                 dataParams.put("treatment", args[10]);
-                dataParams.put("expt", args[11]);
 
-
+                Log.i("DATAPARAS", dataParams.toString());
 
                 // Set up connection
                 HttpURLConnection conn = (HttpURLConnection) url.openConnection();
@@ -249,13 +215,18 @@ public class DiseaseResult extends AppCompatActivity {
                 if (result != null){
 
                     String uploadSuccess = result.getString("message");
-                    if (uploadSuccess.equals("Successfully uploaded analysis")){
+                    if (uploadSuccess.equals("Successfully created experiment")){
                         Toast.makeText(getApplicationContext(), result.getString(
                                 "message"), Toast.LENGTH_LONG).show();
 
-                        Intent intent = new Intent(DiseaseResult.this,
+                        //String username = result.getString("username");
+                       // String userId = result.getString("userid");
+                        //String expId = result.getString("expid");
+
+
+                        Intent intent = new Intent(InputDetails.this,
                                 com.c00098391.planttracker.DetectDisease.class);
-                        intent.putExtra("uaername", username);
+                        intent.putExtra("username", username);
                         intent.putExtra("userid", userId);
                         intent.putExtra("rep", rep);
                         intent.putExtra("expt", expt);
@@ -263,13 +234,25 @@ public class DiseaseResult extends AppCompatActivity {
 
                         startActivity(intent);
 
+
+
+                        //Intent intent = new Intent(TextResults.this,
+                        //        com.c00098391.planttracker.DetectDisease.class);
+                        //intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        // getApplicationContext().startActivity(intent);
+                        //intent.putExtra("username", username);
+                        //intent.putExtra("userid", userId);
+                        //intent.putExtra("expid", expId);
+                        //startActivity(intent);
+
+
                     }else{
                         Toast.makeText(getApplicationContext(), result.getString(
                                 "message"), Toast.LENGTH_LONG).show();
                     }
                 }else{
                     Toast.makeText(getApplicationContext(),
-                            "Unable upload results", Toast.LENGTH_LONG).show();
+                            "Unable to retrieve data from the server", Toast.LENGTH_LONG).show();
                 }
             }catch(JSONException e){
                 e.printStackTrace();
@@ -299,7 +282,8 @@ public class DiseaseResult extends AppCompatActivity {
         return result.toString();
     }
 
-    private class GetWeatherTask extends AsyncTask<String, Void, String>{
+    @SuppressLint("StaticFieldLeak")
+    private class GetWeatherTask extends AsyncTask<String, Void, String> {
 
         private String weather;
 
