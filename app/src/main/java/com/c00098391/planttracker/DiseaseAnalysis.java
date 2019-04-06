@@ -19,6 +19,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.flags.Flag;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 import org.opencv.android.Utils;
@@ -145,8 +147,6 @@ public class DiseaseAnalysis extends AppCompatActivity {
 //                int YonImage = y * h;
 
 
-                int color;
-
            //     switch(action){
               //      case MotionEvent.ACTION_DOWN:
                       //  Toast.makeText(DiseaseAnalysis.this,
@@ -170,6 +170,32 @@ public class DiseaseAnalysis extends AppCompatActivity {
                 int blueValue = Color.blue(pixel);
                 int greenValue = Color.green(pixel);
 
+                int red;
+                int green;
+                int blue;
+
+                int totalRed = 0;
+                int totalGreen = 0;
+                int totalBlue = 0;
+
+                for (int i = yP-4; i <= yP + 4; i++){
+
+                    for (int k = xP - 4; k <= xP + 4; k ++){
+
+                        int f = bm.getPixel(i, k);
+                        red = Color.red(f);
+                        green = Color.green(f);
+                        blue = Color.blue(f);
+
+                        totalRed += red;
+                        totalGreen += green;
+                        totalBlue += blue;
+                    }
+                }
+
+                int finalRed = totalRed / 81;
+                int finalGreen = totalGreen / 81;
+                int finalBlue = totalBlue / 81;
 
                 //color
 
@@ -212,19 +238,19 @@ public class DiseaseAnalysis extends AppCompatActivity {
                  * Get hsv double array of pixel at position of on touch
                  */
 
-//                Size sz = new Size(screenWidth, screenHeight);
-//                Imgproc.resize(hsvMat, hsvMat, sz);
-//                Imgproc.cvtColor(hsvMat, hsvMat, Imgproc.COLOR_RGB2BGR);
-//                Imgproc.cvtColor(hsvMat, hsvMat, Imgproc.COLOR_BGR2HLS);
+                Size sz = new Size(400 ,400);
+                Imgproc.resize(hsvMat, hsvMat, sz);
+                Imgproc.cvtColor(hsvMat, hsvMat, Imgproc.COLOR_RGB2BGR);
+                Imgproc.cvtColor(hsvMat, hsvMat, Imgproc.COLOR_BGR2HLS);
 
 
 
 
-
+                // array of the color for onTouch
                 int [] hsl = new int[3];
 
                 // Get hsl value from rgb values
-                rgb2hsl(redValue, greenValue, blueValue, hsl);
+                rgb2hsl(finalRed, finalGreen, finalBlue, hsl);
                // Color.RGBToHSV(5, 68, 15, hsv);
 
                 Toast.makeText(DiseaseAnalysis.this, "RGB: " + redValue +
@@ -234,39 +260,87 @@ public class DiseaseAnalysis extends AppCompatActivity {
                         Toast.LENGTH_LONG).show();
 
 
+
+
                // Toast.makeText(DiseaseAnalysis.this, "White Count = " + whiteCount +
 //                        "\nGreen Count = " + greenCount + "\nRed Count = " + redCount +
 //                        "\n Unknown = " + unknownCount, Toast.LENGTH_LONG).show();
 
 //
-//                HashMap<String, Integer> colorList = new HashMap<String, Integer>();
+                HashMap<String, Integer> colorList = new HashMap<String, Integer>();
+
+                colorList.put("bad", 0);
 //
-//                int hsvHeight = hsvMat.rows();
-//                int hsvWidth = hsvMat.cols();
-//                int total = hsvHeight * hsvWidth;
-//
+                int hsvHeight = hsvMat.rows();
+                int hsvWidth = hsvMat.cols();
+                int total = hsvHeight * hsvWidth;
+
 //                double [] onTouch = hsvMat.get(imageX, imageY);
 //
 
 
-//                String color = "";
-//                int colorCount = 0;
+                String color = "";
+                int colorCount = 0;
+                double H = hsl[0] / 2.0;
 
-//                for (int i = 0; i < hsvHeight; i++){
-//
-//                    for (int k = 0; k < hsvWidth; k++){
-//
-//
-//
-//                        //double [] hsl = hsvMat.get(i, k);
-//
-//                        double h = hsl[0];
-//                        double s = hsl[1];
-//                        double l = hsl[2];
-//
-////                        if ((h >= 65) && (h <= 100)) {
-////                            color = "white";
-////                        }
+                double lowerH = H - 18.0;
+                double upperH = H + 18.0;
+                double lowerS = hsl[1] - 10.0;
+                double upperS = hsl[1] + 10.0;
+                double lowerL = hsl[2] - 10.0;
+                double upperL = hsl[2] + 10.0;
+
+
+                for (int i = 0; i < hsvHeight; i++){
+
+                    for (int k = 0; k < hsvWidth; k++) {
+
+
+
+                      double [] hslMat = hsvMat.get(i, k);
+
+                        double h = hslMat[0]; // open cv uses 180 not 360 for memory reasons
+                        double s = hslMat[1];
+                        double l = hslMat[2];
+
+
+
+                        if ((l >= 90) && (l <= 100)) {
+                            color = "white";
+                        }
+                        else if ((h >= lowerH && h <= upperH) && (s >= lowerS && s <= upperS) && (l >= lowerL && l <= upperL)) {
+                            color = "bad";
+                        }
+
+                        /**
+                         * Have white and bad ....
+                         */
+                        if (colorList.containsKey(color)) {
+                            colorCount = colorList.get(color);
+                            colorCount++;
+                            colorList.put(color, colorCount);
+
+                        } else {
+                            colorCount = 1;
+                            colorList.put(color, colorCount);
+                        }
+
+                    }
+                }
+
+                        int whiteCount = colorList.get("white");
+                        int badCount = colorList.get("bad");
+                        double leaf = total - whiteCount;
+                        double disease = (badCount / leaf) * 100.0;
+
+
+
+                        Toast.makeText(DiseaseAnalysis.this, "White Count = " + whiteCount +
+                         "\nBad Count = " + badCount + "\nleaf Count = " + leaf +
+                            "\n disease = " + disease, Toast.LENGTH_LONG).show();
+
+
+                        String analysis = String.format("%.2f", disease);
 //
 ////                        else if(h <= touchHupper && h >= touchHlower
 ////                                && l <= touchLupper && l >= touchLlower
@@ -324,14 +398,14 @@ public class DiseaseAnalysis extends AppCompatActivity {
 
               //  String a = String.valueOf(analysis);
 
-                String b = "18%";
+               // String b = "18%";
 
 
 
 
                 Intent intent = new Intent(DiseaseAnalysis.this,
                         com.c00098391.planttracker.DiseaseResult.class);
-                intent.putExtra("analysis", b);
+                intent.putExtra("disease", analysis);
                 intent.putExtra("image", byteArray);
                 intent.putExtra("lat", lat);
                 intent.putExtra("lon", lon);
@@ -342,10 +416,10 @@ public class DiseaseAnalysis extends AppCompatActivity {
                 intent.putExtra("treatment", treatment);
                 intent.putExtra("expt", expt);
                 intent.putExtra("expid", expId);
-              //  startActivity(intent);
+                startActivity(intent);
 
 
-                return true;
+                return false;
 
                 // finish();
 
