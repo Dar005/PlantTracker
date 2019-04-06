@@ -32,10 +32,11 @@
             android:screenOrientation="portrait" />
         <activity
             android:name=".DiseaseResult"
+            android:label="Disease Results"
             android:screenOrientation="portrait" />
         <activity
             android:name=".DiseaseAnalysis"
-            android:label="Disease Results"
+            android:label="Disease Analysis"
             android:screenOrientation="portrait" />
         <activity
             android:name=".DetectDisease"

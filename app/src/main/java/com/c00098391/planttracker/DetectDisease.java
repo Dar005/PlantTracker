@@ -306,7 +306,8 @@ public class DetectDisease extends AppCompatActivity {
 
                         BitmapFactory.Options options = new BitmapFactory.Options();
                         // options.inJustDecodeBounds = true;
-                        options.inSampleSize = 4;
+                        // Size is 3 as 4 meant onTouch on analysis page could be outside the bounds of the image...
+                        options.inSampleSize = 3;
                         Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length,  options);
                         int imageHeight = options.outHeight;
                         int imageWidth = options.outWidth;
