@@ -50,6 +50,7 @@ public class DiseaseAnalysis extends AppCompatActivity {
     String rep;
     String treatment;
     String expt;
+    String expId;
 
     static InputStream inputStream = null;
     static String json;
@@ -84,12 +85,12 @@ public class DiseaseAnalysis extends AppCompatActivity {
         rep = getIntent().getStringExtra("rep");
         treatment = getIntent().getStringExtra("treatment");
         expt = getIntent().getStringExtra("expt");
+        expId = getIntent().getStringExtra("expid");
 
         final byte[] byteArray = getIntent().getByteArrayExtra("image");
         final Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
 
         imgView.setImageBitmap(bm);
-
 
 
         DisplayMetrics dm = new DisplayMetrics();
@@ -245,6 +246,7 @@ public class DiseaseAnalysis extends AppCompatActivity {
                 intent.putExtra("rep", rep);
                 intent.putExtra("treatment", treatment);
                 intent.putExtra("expt", expt);
+                intent.putExtra("expid", expId);
                 startActivity(intent);
 
 

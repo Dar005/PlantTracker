@@ -50,6 +50,7 @@ public class ContinueExperiment extends AppCompatActivity {
     static String error = "";
 
     ArrayList<String> exps = new ArrayList<>();
+    ArrayList<String> expIds = new ArrayList<>();
     Map<String, String> all = new HashMap<>();
     String username;
     String userId;
@@ -66,6 +67,7 @@ public class ContinueExperiment extends AppCompatActivity {
         username = getIntent().getStringExtra("username");
         userId = getIntent().getStringExtra("userid");
         exps = getIntent().getStringArrayListExtra("exps");
+        expIds = getIntent().getStringArrayListExtra("expids");
 
         String[] user = new String[1];
         user[0] = username;
@@ -81,6 +83,8 @@ public class ContinueExperiment extends AppCompatActivity {
             public void onItemClick(AdapterView<?> adapterView, View view, int i, long l) {
                 String value = adapter.getItem(i);
 
+                String expId = expIds.get(i);
+
                 String[] parts = value.split(" ");
                 String rep = parts[0];
                 String treatment = parts[1];
@@ -93,6 +97,7 @@ public class ContinueExperiment extends AppCompatActivity {
                 intent.putExtra("treatment", treatment);
                 intent.putExtra("username", username);
                 intent.putExtra("userid", userId);
+                intent.putExtra("expid", expId);
                 startActivity(intent);
 
             }

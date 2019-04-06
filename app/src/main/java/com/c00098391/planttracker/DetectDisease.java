@@ -108,7 +108,7 @@ public class DetectDisease extends AppCompatActivity {
     String rep;
     String username;
     String userId;
-   // String exp;
+    String expId;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -129,6 +129,7 @@ public class DetectDisease extends AppCompatActivity {
         rep = getIntent().getStringExtra("rep");
         expt = getIntent().getStringExtra("expt");
         treatment = getIntent().getStringExtra("treatment");
+        expId = getIntent().getStringExtra("expid");
 
 
 
@@ -301,8 +302,21 @@ public class DetectDisease extends AppCompatActivity {
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
-                        Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                      //  bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
+
+
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                        // options.inJustDecodeBounds = true;
+                        options.inSampleSize = 4;
+                        Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length,  options);
+                        int imageHeight = options.outHeight;
+                        int imageWidth = options.outWidth;
+                        String imageType = options.outMimeType;
+                        Log.i("DETECT DISEASE", "Bitmap Info :" +  " Height: " + imageHeight + " Width: " + imageWidth + "Type: " + imageType + "----------------------------------------------------------------");
+
+
+
+                       // Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
                         bmp.compress(Bitmap.CompressFormat.JPEG, 70, stream);
                         byte[] byteOut = stream.toByteArray();
@@ -327,6 +341,7 @@ public class DetectDisease extends AppCompatActivity {
                         intent.putExtra("rep", rep);
                         intent.putExtra("treatment", treatment);
                         intent.putExtra("expt", expt);
+                        intent.putExtra("expid", expId);
                         startActivity(intent);
 
                         // save(byteOut);

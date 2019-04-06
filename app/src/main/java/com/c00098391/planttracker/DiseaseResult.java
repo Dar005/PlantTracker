@@ -63,6 +63,7 @@ public class DiseaseResult extends AppCompatActivity {
     String rep;
     String treatment;
     String expt;
+    String expId;
 
     // Location variables
     String lat = "";
@@ -103,6 +104,7 @@ public class DiseaseResult extends AppCompatActivity {
         rep = getIntent().getStringExtra("rep");
         treatment = getIntent().getStringExtra("treatment");
         expt = getIntent().getStringExtra("expt");
+        expId = getIntent().getStringExtra("expid");
 
         final byte[] byteArray = getIntent().getByteArrayExtra("image");
         Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
@@ -113,8 +115,6 @@ public class DiseaseResult extends AppCompatActivity {
 //
 //        lat = Double.toString(gps.getLatitude());
 //        lon = Double.toString(gps.getLongitude());
-
-
 
 
         // Base64 encode image
@@ -128,7 +128,7 @@ public class DiseaseResult extends AppCompatActivity {
         String date = df.format(Calendar.getInstance().getTime());
         String time = tf.format(Calendar.getInstance().getTime());
 
-        final String [] analysisDetails = new String[12];
+        final String [] analysisDetails = new String[13];
         analysisDetails[0] = date;
         analysisDetails[1] = time;
         analysisDetails[2] = encodedImg;
@@ -141,6 +141,7 @@ public class DiseaseResult extends AppCompatActivity {
         analysisDetails[9] = rep;
         analysisDetails[10] = treatment;
         analysisDetails[11] = expt;
+        analysisDetails[12] = expId;
 
         //final String [] up = imageDetails.clone();
 
@@ -187,6 +188,7 @@ public class DiseaseResult extends AppCompatActivity {
                 dataParams.put("rep", args[9]);
                 dataParams.put("treatment", args[10]);
                 dataParams.put("expt", args[11]);
+                dataParams.put("expid", args[12]);
 
 
 
@@ -255,11 +257,12 @@ public class DiseaseResult extends AppCompatActivity {
 
                         Intent intent = new Intent(DiseaseResult.this,
                                 com.c00098391.planttracker.DetectDisease.class);
-                        intent.putExtra("uaername", username);
+                        intent.putExtra("username", username);
                         intent.putExtra("userid", userId);
                         intent.putExtra("rep", rep);
                         intent.putExtra("expt", expt);
                         intent.putExtra("treatment", treatment);
+                        intent.putExtra("expid", expId);
 
                         startActivity(intent);
 

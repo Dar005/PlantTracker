@@ -248,10 +248,24 @@ public class CaptureText extends AppCompatActivity {
                         ByteBuffer buffer = image.getPlanes()[0].getBuffer();
                         byte[] bytes = new byte[buffer.capacity()];
                         buffer.get(bytes);
-                        Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
-                        //bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
+
+
+                        BitmapFactory.Options options = new BitmapFactory.Options();
+                       // options.inJustDecodeBounds = true;
+                        options.inSampleSize = 4;
+                        Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length,  options);
+                        int imageHeight = options.outHeight;
+                        int imageWidth = options.outWidth;
+                        String imageType = options.outMimeType;
+                        Log.i("IMAGE TEST", "Bitmap Info :" +  " Height: " + imageHeight + " Width: " + imageWidth + "Type: " + imageType + "----------------------------------------------------------------");
+
+
+                      //  Bitmap bmp = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                        bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
                         ByteArrayOutputStream stream = new ByteArrayOutputStream();
                         bmp.compress(Bitmap.CompressFormat.JPEG, 70, stream);
+
+
                         byte[] byteOut = stream.toByteArray();
 
 

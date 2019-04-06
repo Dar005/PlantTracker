@@ -221,7 +221,7 @@ public class InputDetails extends AppCompatActivity {
 
                         //String username = result.getString("username");
                        // String userId = result.getString("userid");
-                        //String expId = result.getString("expid");
+                        String expId = result.getString("expid");
 
 
                         Intent intent = new Intent(InputDetails.this,
@@ -231,6 +231,7 @@ public class InputDetails extends AppCompatActivity {
                         intent.putExtra("rep", rep);
                         intent.putExtra("expt", expt);
                         intent.putExtra("treatment", treatment);
+                        intent.putExtra("expid", expId);
 
                         startActivity(intent);
 

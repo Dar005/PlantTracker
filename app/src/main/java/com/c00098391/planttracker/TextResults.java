@@ -106,8 +106,20 @@ public class TextResults extends AppCompatActivity {
         username = getIntent().getStringExtra("username");
         userId = getIntent().getStringExtra("userid");
 
+
+        BitmapFactory.Options options = new BitmapFactory.Options();
         final byte[] byteArray = getIntent().getByteArrayExtra("image");
         Bitmap bm = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length);
+
+        // options.inJustDecodeBounds = true;
+        //options.inSampleSize = 4;
+        Bitmap bmp = BitmapFactory.decodeByteArray(byteArray, 0, byteArray.length,  options);
+        int imageHeight = options.outHeight;
+        int imageWidth = options.outWidth;
+        String imageType = options.outMimeType;
+        Log.i("TEXT RESULTS", "Bitmap Info :" +  " Height: " + imageHeight + " Width: " + imageWidth + "Type: " + imageType + "=============================================================================================================================");
+
+
 
         runTextRecognition(bm);
 
@@ -362,7 +374,7 @@ public class TextResults extends AppCompatActivity {
 
                        // String username = result.getString("username");
                       //  String userId = result.getString("userid");
-                      //  String expId = result.getString("expid");
+                        String expId = result.getString("expid");
                      //   String rep = result.getString("rep");
                      //   String treatment = result.getString("treatment");
                       //  String expt = result.getString("expt");
@@ -376,6 +388,7 @@ public class TextResults extends AppCompatActivity {
                         intent.putExtra("rep", rep);
                         intent.putExtra("treatment", treatment);
                         intent.putExtra("expt", expt);
+                        intent.putExtra("expid", expId);
                         startActivity(intent);
 
 

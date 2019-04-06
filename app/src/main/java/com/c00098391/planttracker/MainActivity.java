@@ -37,6 +37,7 @@ public class MainActivity extends AppCompatActivity {
     static JSONObject jObj = null;
     static String error = "";
     ArrayList<String> exps = new ArrayList<>();
+    ArrayList<String> expIds = new ArrayList<>();
 
 
     String userId;
@@ -94,6 +95,7 @@ public class MainActivity extends AppCompatActivity {
                 intent.putExtra("username", username);
                 intent.putExtra("exps", exps);
                 intent.putExtra("userid", userId);
+                intent.putExtra("expids", expIds);
                 startActivity(intent);
             }
         });
@@ -114,7 +116,6 @@ public class MainActivity extends AppCompatActivity {
     // Async task for sending data i.e. image date and time....
     public class GetUserExperimentData extends AsyncTask<String, Void, JSONObject> {
 
-        public DataResponse response = null;
 
         @Override
         protected JSONObject doInBackground(String... args){
@@ -204,9 +205,11 @@ public class MainActivity extends AppCompatActivity {
                             String rep = jsonArray.getJSONObject(i).getString("replicant");
                             String expt = jsonArray.getJSONObject(i).getString("expt");
                             String treatment = jsonArray.getJSONObject(i).getString("treatment");
+                            String expId = jsonArray.getJSONObject(i).getString("id");
                             // list.put(""+type ," "+value);
                             //all.put(""+type ," "+value);
                             exps.add(rep +  " " + treatment + " " + expt);
+                            expIds.add(expId);
                         }
 
 
